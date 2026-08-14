@@ -23,21 +23,44 @@ function AppContent() {
     const checkRoute = () => {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
+      const search = window.location.search.toLowerCase();
       setCurrentPath(path);
       setCurrentHash(hash);
 
-      if (path === '/admin' || path.startsWith('/admin/') || hash === '#admin') {
+      if (
+        path === '/admin' ||
+        path.startsWith('/admin/') ||
+        hash === '#admin' ||
+        hash.startsWith('#admin') ||
+        search.includes('admin')
+      ) {
         setIsAdminOpen(true);
       }
     };
 
+    // Keyboard shortcut (Alt+A or Ctrl+Shift+A or Cmd+Shift+A) to quickly access admin panel
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.altKey && (e.key === 'a' || e.key === 'A')) ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'a' || e.key === 'A'))
+      ) {
+        e.preventDefault();
+        setIsAdminOpen(true);
+      }
+    };
+
+    // Expose helper on window for convenience
+    (window as any).openAdmin = () => setIsAdminOpen(true);
+
     checkRoute();
     window.addEventListener('popstate', checkRoute);
     window.addEventListener('hashchange', checkRoute);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('popstate', checkRoute);
       window.removeEventListener('hashchange', checkRoute);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [setIsAdminOpen]);
 
