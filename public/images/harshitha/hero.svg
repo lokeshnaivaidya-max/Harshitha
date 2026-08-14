@@ -1,0 +1,38 @@
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b1d3d" />
+      <stop offset="50%" stop-color="#701a75" />
+      <stop offset="100%" stop-color="#1f1124" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#heroGrad)" rx="32" />
+  <circle cx="400" cy="400" r="300" fill="url(#glow)" />
+  <rect x="40" y="40" width="720" height="920" rx="24" stroke="rgba(244, 114, 182, 0.3)" stroke-width="2" stroke-dasharray="8 8" />
+  
+  <g transform="translate(400, 360)">
+    <circle cx="0" cy="0" r="90" fill="rgba(255,255,255,0.08)" stroke="#f472b6" stroke-width="3" />
+    <!-- Sparkle / Star Icon -->
+    <path d="M0 -50 L12 -12 L50 0 L12 12 L0 50 L-12 12 L-50 0 L-12 -12 Z" fill="#fbbf24" />
+    <circle cx="0" cy="0" r="16" fill="#f43f5e" />
+  </g>
+
+  <text x="400" y="540" text-anchor="middle" fill="#ffffff" font-family="Outfit, sans-serif" font-size="34" font-weight="600" letter-spacing="1">
+    Harshitha's Portrait
+  </text>
+  <text x="400" y="590" text-anchor="middle" fill="#fbcfe8" font-family="Outfit, sans-serif" font-size="20" opacity="0.85">
+    Replace: /public/images/harshitha/hero.svg
+  </text>
+  <text x="400" y="630" text-anchor="middle" fill="#fb7185" font-family="Outfit, sans-serif" font-size="16" opacity="0.7">
+    (or update path in src/data/harshitha.ts)
+  </text>
+
+  <rect x="250" y="700" width="300" height="54" rx="27" fill="rgba(255,255,255,0.12)" stroke="#f472b6" stroke-width="1.5" />
+  <text x="400" y="734" text-anchor="middle" fill="#ffffff" font-family="Outfit, sans-serif" font-size="18" font-weight="500">
+    ✨ Birthday Star ✨
+  </text>
+</svg>

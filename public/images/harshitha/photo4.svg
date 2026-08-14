@@ -1,0 +1,24 @@
+<svg width="600" height="750" viewBox="0 0 600 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4c0519" />
+      <stop offset="50%" stop-color="#881337" />
+      <stop offset="100%" stop-color="#1f1124" />
+    </linearGradient>
+  </defs>
+  <rect width="600" height="750" fill="url(#pGrad4)" rx="24" />
+  <rect x="24" y="24" width="552" height="702" rx="18" stroke="rgba(251, 113, 133, 0.3)" stroke-width="1.5" stroke-dasharray="6 6" />
+  <g transform="translate(300, 300)">
+    <circle cx="0" cy="0" r="70" fill="rgba(244, 63, 94, 0.15)" stroke="#f43f5e" stroke-width="2" />
+    <polygon points="0,-35 25,-10 16,28 -16,28 -25,-10" fill="#f43f5e" />
+  </g>
+  <text x="300" y="440" text-anchor="middle" fill="#ffffff" font-family="Outfit, sans-serif" font-size="28" font-weight="600">
+    Photo 04: Pure Elegance
+  </text>
+  <text x="300" y="480" text-anchor="middle" fill="#fecdd3" font-family="Outfit, sans-serif" font-size="16" opacity="0.8">
+    /public/images/harshitha/photo4.svg
+  </text>
+  <text x="300" y="515" text-anchor="middle" fill="#fb7185" font-family="Outfit, sans-serif" font-size="14" opacity="0.7">
+    Replace with Harshitha's photo
+  </text>
+</svg>

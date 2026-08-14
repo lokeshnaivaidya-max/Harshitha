@@ -1,0 +1,24 @@
+<svg width="600" height="750" viewBox="0 0 600 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pGrad6" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#451a03" />
+      <stop offset="50%" stop-color="#b45309" />
+      <stop offset="100%" stop-color="#1f130b" />
+    </linearGradient>
+  </defs>
+  <rect width="600" height="750" fill="url(#pGrad6)" rx="24" />
+  <rect x="24" y="24" width="552" height="702" rx="18" stroke="rgba(251, 191, 36, 0.3)" stroke-width="1.5" stroke-dasharray="6 6" />
+  <g transform="translate(300, 300)">
+    <circle cx="0" cy="0" r="70" fill="rgba(217, 119, 6, 0.15)" stroke="#fbbf24" stroke-width="2" />
+    <path d="M-18 10 L18 10 L14 -15 L-14 -15 Z" fill="#d97706" />
+  </g>
+  <text x="300" y="440" text-anchor="middle" fill="#ffffff" font-family="Outfit, sans-serif" font-size="28" font-weight="600">
+    Photo 06: Cozy Coffee
+  </text>
+  <text x="300" y="480" text-anchor="middle" fill="#fde68a" font-family="Outfit, sans-serif" font-size="16" opacity="0.8">
+    /public/images/harshitha/photo6.svg
+  </text>
+  <text x="300" y="515" text-anchor="middle" fill="#f59e0b" font-family="Outfit, sans-serif" font-size="14" opacity="0.7">
+    Replace with Harshitha's photo
+  </text>
+</svg>

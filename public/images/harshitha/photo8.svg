@@ -1,0 +1,24 @@
+<svg width="600" height="750" viewBox="0 0 600 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pGrad8" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a044e" />
+      <stop offset="50%" stop-color="#86198f" />
+      <stop offset="100%" stop-color="#190620" />
+    </linearGradient>
+  </defs>
+  <rect width="600" height="750" fill="url(#pGrad8)" rx="24" />
+  <rect x="24" y="24" width="552" height="702" rx="18" stroke="rgba(244, 114, 182, 0.3)" stroke-width="1.5" stroke-dasharray="6 6" />
+  <g transform="translate(300, 300)">
+    <circle cx="0" cy="0" r="70" fill="rgba(236, 72, 153, 0.15)" stroke="#f472b6" stroke-width="2" />
+    <path d="M0 -30 L20 25 L-20 25 Z" fill="#ec4899" />
+  </g>
+  <text x="300" y="440" text-anchor="middle" fill="#ffffff" font-family="Outfit, sans-serif" font-size="28" font-weight="600">
+    Photo 08: Iconic Harshitha
+  </text>
+  <text x="300" y="480" text-anchor="middle" fill="#fbcfe8" font-family="Outfit, sans-serif" font-size="16" opacity="0.8">
+    /public/images/harshitha/photo8.svg
+  </text>
+  <text x="300" y="515" text-anchor="middle" fill="#f472b6" font-family="Outfit, sans-serif" font-size="14" opacity="0.7">
+    Replace with Harshitha's photo
+  </text>
+</svg>

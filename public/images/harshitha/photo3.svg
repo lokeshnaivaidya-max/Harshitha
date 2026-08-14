@@ -1,0 +1,26 @@
+<svg width="600" height="750" viewBox="0 0 600 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="50%" stop-color="#312e81" />
+      <stop offset="100%" stop-color="#171124" />
+    </linearGradient>
+  </defs>
+  <rect width="600" height="750" fill="url(#pGrad3)" rx="24" />
+  <rect x="24" y="24" width="552" height="702" rx="18" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1.5" stroke-dasharray="6 6" />
+  <g transform="translate(300, 300)">
+    <circle cx="0" cy="0" r="70" fill="rgba(99, 102, 241, 0.15)" stroke="#818cf8" stroke-width="2" />
+    <circle cx="-16" cy="-10" r="6" fill="#818cf8" />
+    <circle cx="16" cy="-10" r="6" fill="#818cf8" />
+    <path d="M-22 10 Q0 30 22 10" stroke="#818cf8" stroke-width="4" stroke-linecap="round" fill="none" />
+  </g>
+  <text x="300" y="440" text-anchor="middle" fill="#ffffff" font-family="Outfit, sans-serif" font-size="28" font-weight="600">
+    Photo 03: Unfiltered Joy
+  </text>
+  <text x="300" y="480" text-anchor="middle" fill="#c7d2fe" font-family="Outfit, sans-serif" font-size="16" opacity="0.8">
+    /public/images/harshitha/photo3.svg
+  </text>
+  <text x="300" y="515" text-anchor="middle" fill="#a5b4fc" font-family="Outfit, sans-serif" font-size="14" opacity="0.7">
+    Replace with Harshitha's photo
+  </text>
+</svg>

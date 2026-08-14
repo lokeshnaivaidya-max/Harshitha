@@ -1,0 +1,24 @@
+<svg width="600" height="750" viewBox="0 0 600 750" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pGrad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="50%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#141d1a" />
+    </linearGradient>
+  </defs>
+  <rect width="600" height="750" fill="url(#pGrad5)" rx="24" />
+  <rect x="24" y="24" width="552" height="702" rx="18" stroke="rgba(52, 211, 153, 0.3)" stroke-width="1.5" stroke-dasharray="6 6" />
+  <g transform="translate(300, 300)">
+    <circle cx="0" cy="0" r="70" fill="rgba(16, 185, 129, 0.15)" stroke="#34d399" stroke-width="2" />
+    <path d="M-25 20 L0 -25 L25 20 Z" fill="#10b981" />
+  </g>
+  <text x="300" y="440" text-anchor="middle" fill="#ffffff" font-family="Outfit, sans-serif" font-size="28" font-weight="600">
+    Photo 05: Adventures
+  </text>
+  <text x="300" y="480" text-anchor="middle" fill="#a7f3d0" font-family="Outfit, sans-serif" font-size="16" opacity="0.8">
+    /public/images/harshitha/photo5.svg
+  </text>
+  <text x="300" y="515" text-anchor="middle" fill="#34d399" font-family="Outfit, sans-serif" font-size="14" opacity="0.7">
+    Replace with Harshitha's photo
+  </text>
+</svg>
