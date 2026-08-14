@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cake, Camera, Heart, Star, ArrowDown, Edit3 } from 'lucide-react';
+import { Cake, Camera, Heart, Star, ArrowDown } from 'lucide-react';
 import { motion } from 'motion/react';
 import { harshithaData } from '../data/harshitha';
 import { soundEngine } from '../utils/sound';
@@ -7,7 +7,7 @@ import { triggerBirthdayConfetti, triggerHeartBurst } from '../utils/confetti';
 import { usePhotoContext } from '../context/PhotoContext';
 
 export const HeroSection: React.FC = () => {
-  const { heroPhoto, setIsAdminOpen } = usePhotoContext();
+  const { heroPhoto } = usePhotoContext();
 
   const handleHeroConfetti = () => {
     soundEngine.playSparkleSound();

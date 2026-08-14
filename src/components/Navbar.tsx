@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Heart, Menu, X, Music, Cake, Camera, BookOpen, Mail, PartyPopper, ImagePlus } from 'lucide-react';
+import { Volume2, VolumeX, Heart, Menu, X, Cake, Camera, BookOpen, Mail, PartyPopper } from 'lucide-react';
 import { soundEngine } from '../utils/sound';
 import { triggerBirthdayConfetti } from '../utils/confetti';
 import { harshithaData } from '../data/harshitha';
-import { usePhotoContext } from '../context/PhotoContext';
 
 export const Navbar: React.FC = () => {
-  const { setIsAdminOpen, customPhotoCount } = usePhotoContext();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -88,24 +86,8 @@ export const Navbar: React.FC = () => {
           ))}
         </div>
 
-        {/* Right Actions: Photo Admin, Music Player & Celebrate Button */}
+        {/* Right Actions: Music Player & Celebrate Button */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Photo Admin Trigger */}
-          <button
-            onClick={() => setIsAdminOpen(true)}
-            id="nav-admin-toggle"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/30 text-rose-200 border border-rose-400/30 hover:border-rose-400/60 transition-all duration-200 cursor-pointer"
-            title="Open Photo Admin to add Harshitha's pictures"
-          >
-            <ImagePlus className="w-3.5 h-3.5 text-rose-400" />
-            <span className="hidden sm:inline">Add Pics</span>
-            {customPhotoCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center font-bold">
-                {customPhotoCount}
-              </span>
-            )}
-          </button>
-
           {/* Music Player Button */}
           <button
             onClick={handleMusicToggle}
@@ -175,16 +157,6 @@ export const Navbar: React.FC = () => {
               </a>
             );
           })}
-          <button
-            onClick={() => {
-              setMobileMenuOpen(false);
-              setIsAdminOpen(true);
-            }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 transition text-left"
-          >
-            <ImagePlus className="w-4 h-4 text-rose-400" />
-            <span>Add Photos of Harshitha (Admin)</span>
-          </button>
         </div>
       )}
     </nav>
