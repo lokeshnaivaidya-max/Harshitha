@@ -1,5 +1,5 @@
 // Audio & Sound Engine for Harshitha's Birthday Website
-// Includes support for /audio/birthday.mp3 with an intelligent Web Audio API music-box fallback
+// Includes realistic party popper sound synthesis, balloon pops, cake cutting, candle blowing, and music player
 
 class SoundEngine {
   private audioCtx: AudioContext | null = null;
@@ -17,7 +17,9 @@ class SoundEngine {
   private getAudioContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
     if (!this.audioCtx) {
-      const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtxClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtxClass) {
         this.audioCtx = new AudioCtxClass();
       }
@@ -97,36 +99,35 @@ class SoundEngine {
     if (!ctx) return;
 
     // Melody notes (Hz frequencies) & relative durations for a music-box style celebration
-    // Happy Birthday melody in key of C & F:
     const notes: { freq: number; dur: number; delay: number }[] = [
-      { freq: 261.63, dur: 0.35, delay: 0 },    // C4
-      { freq: 261.63, dur: 0.35, delay: 400 },  // C4
-      { freq: 293.66, dur: 0.7, delay: 800 },   // D4
-      { freq: 261.63, dur: 0.7, delay: 1600 },  // C4
-      { freq: 349.23, dur: 0.7, delay: 2400 },  // F4
-      { freq: 329.63, dur: 1.2, delay: 3200 },  // E4
+      { freq: 261.63, dur: 0.35, delay: 0 }, // C4
+      { freq: 261.63, dur: 0.35, delay: 400 }, // C4
+      { freq: 293.66, dur: 0.7, delay: 800 }, // D4
+      { freq: 261.63, dur: 0.7, delay: 1600 }, // C4
+      { freq: 349.23, dur: 0.7, delay: 2400 }, // F4
+      { freq: 329.63, dur: 1.2, delay: 3200 }, // E4
 
-      { freq: 261.63, dur: 0.35, delay: 4600 },  // C4
-      { freq: 261.63, dur: 0.35, delay: 5000 },  // C4
-      { freq: 293.66, dur: 0.7, delay: 5400 },   // D4
-      { freq: 261.63, dur: 0.7, delay: 6200 },   // C4
-      { freq: 392.00, dur: 0.7, delay: 7000 },   // G4
-      { freq: 349.23, dur: 1.2, delay: 7800 },   // F4
+      { freq: 261.63, dur: 0.35, delay: 4600 }, // C4
+      { freq: 261.63, dur: 0.35, delay: 5000 }, // C4
+      { freq: 293.66, dur: 0.7, delay: 5400 }, // D4
+      { freq: 261.63, dur: 0.7, delay: 6200 }, // C4
+      { freq: 392.0, dur: 0.7, delay: 7000 }, // G4
+      { freq: 349.23, dur: 1.2, delay: 7800 }, // F4
 
-      { freq: 261.63, dur: 0.35, delay: 9200 },  // C4
-      { freq: 261.63, dur: 0.35, delay: 9600 },  // C4
-      { freq: 523.25, dur: 0.7, delay: 10000 },  // C5
-      { freq: 440.00, dur: 0.7, delay: 10800 },  // A4
-      { freq: 349.23, dur: 0.7, delay: 11600 },  // F4
-      { freq: 329.63, dur: 0.7, delay: 12400 },  // E4
-      { freq: 293.66, dur: 1.0, delay: 13200 },  // D4
+      { freq: 261.63, dur: 0.35, delay: 9200 }, // C4
+      { freq: 261.63, dur: 0.35, delay: 9600 }, // C4
+      { freq: 523.25, dur: 0.7, delay: 10000 }, // C5
+      { freq: 440.0, dur: 0.7, delay: 10800 }, // A4
+      { freq: 349.23, dur: 0.7, delay: 11600 }, // F4
+      { freq: 329.63, dur: 0.7, delay: 12400 }, // E4
+      { freq: 293.66, dur: 1.0, delay: 13200 }, // D4
 
       { freq: 466.16, dur: 0.35, delay: 14600 }, // Bb4
       { freq: 466.16, dur: 0.35, delay: 15000 }, // Bb4
-      { freq: 440.00, dur: 0.7, delay: 15400 },  // A4
-      { freq: 349.23, dur: 0.7, delay: 16200 },  // F4
-      { freq: 392.00, dur: 0.7, delay: 17000 },  // G4
-      { freq: 349.23, dur: 1.6, delay: 17800 },  // F4
+      { freq: 440.0, dur: 0.7, delay: 15400 }, // A4
+      { freq: 349.23, dur: 0.7, delay: 16200 }, // F4
+      { freq: 392.0, dur: 0.7, delay: 17000 }, // G4
+      { freq: 349.23, dur: 1.6, delay: 17800 }, // F4
     ];
 
     const loopLength = 20500;
@@ -159,7 +160,6 @@ class SoundEngine {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      // Sine wave with slight triangle shimmer for celestial music box feel
       osc.type = 'sine';
       osc.frequency.setValueAtTime(frequency, now);
 
@@ -172,6 +172,167 @@ class SoundEngine {
 
       osc.start(now);
       osc.stop(now + duration + 0.7);
+    } catch {
+      // Ignored
+    }
+  }
+
+  // ==========================================
+  // REALISTIC PARTY POPPER SOUND SYNTHESIS
+  // Features: Explosive high-pressure burst crack, pressurized tube whoosh / hiss,
+  // low-frequency thud, and sparkling celebratory tail.
+  // ==========================================
+  public playPartyPopperSound() {
+    if (this.isMuted) return;
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+
+      // 1. Initial Explosive Bang & Spark Crack (high-energy noise burst)
+      const noiseBufferSize = Math.floor(ctx.sampleRate * 0.45);
+      const noiseBuffer = ctx.createBuffer(1, noiseBufferSize, ctx.sampleRate);
+      const noiseData = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseBufferSize; i++) {
+        noiseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.08));
+      }
+
+      const noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+
+      // Resonant bandpass filter for the snappy cardboard cylinder "POP"
+      const popFilter = ctx.createBiquadFilter();
+      popFilter.type = 'bandpass';
+      popFilter.frequency.setValueAtTime(1600, now);
+      popFilter.frequency.exponentialRampToValueAtTime(450, now + 0.12);
+      popFilter.Q.setValueAtTime(4.5, now);
+
+      const popGain = ctx.createGain();
+      popGain.gain.setValueAtTime(0.9, now);
+      popGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      noiseSource.connect(popFilter);
+      popFilter.connect(popGain);
+      popGain.connect(ctx.destination);
+
+      noiseSource.start(now);
+
+      // 2. Low-Frequency Pressure Thump (compressed air spring punch)
+      const subOsc = ctx.createOscillator();
+      const subGain = ctx.createGain();
+      subOsc.type = 'triangle';
+      subOsc.frequency.setValueAtTime(240, now);
+      subOsc.frequency.exponentialRampToValueAtTime(38, now + 0.18);
+
+      subGain.gain.setValueAtTime(0.85, now);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+      subOsc.connect(subGain);
+      subGain.connect(ctx.destination);
+
+      subOsc.start(now);
+      subOsc.stop(now + 0.25);
+
+      // 3. Confetti Streamer Hiss & Whistle Whoosh (ribbons cutting through air)
+      const whooshBufferSize = Math.floor(ctx.sampleRate * 0.5);
+      const whooshBuffer = ctx.createBuffer(1, whooshBufferSize, ctx.sampleRate);
+      const whooshData = whooshBuffer.getChannelData(0);
+      for (let i = 0; i < whooshBufferSize; i++) {
+        whooshData[i] = Math.random() * 2 - 1;
+      }
+
+      const whooshSource = ctx.createBufferSource();
+      whooshSource.buffer = whooshBuffer;
+
+      const whooshFilter = ctx.createBiquadFilter();
+      whooshFilter.type = 'highpass';
+      whooshFilter.frequency.setValueAtTime(2800, now);
+      whooshFilter.frequency.linearRampToValueAtTime(1200, now + 0.3);
+
+      const whooshGain = ctx.createGain();
+      whooshGain.gain.setValueAtTime(0.001, now);
+      whooshGain.gain.linearRampToValueAtTime(0.35, now + 0.03);
+      whooshGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+
+      whooshSource.connect(whooshFilter);
+      whooshFilter.connect(whooshGain);
+      whooshGain.connect(ctx.destination);
+
+      whooshSource.start(now + 0.01);
+
+      // 4. Celebratory Micro-Glitter Chimes (sparkling confetti scatter)
+      [1480, 1860, 2340].forEach((freq, idx) => {
+        const chimeOsc = ctx.createOscillator();
+        const chimeGain = ctx.createGain();
+        chimeOsc.type = 'sine';
+        chimeOsc.frequency.setValueAtTime(freq, now + 0.04 + idx * 0.03);
+
+        chimeGain.gain.setValueAtTime(0.001, now + 0.04 + idx * 0.03);
+        chimeGain.gain.linearRampToValueAtTime(0.08, now + 0.05 + idx * 0.03);
+        chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35 + idx * 0.03);
+
+        chimeOsc.connect(chimeGain);
+        chimeGain.connect(ctx.destination);
+
+        chimeOsc.start(now + 0.04 + idx * 0.03);
+        chimeOsc.stop(now + 0.4 + idx * 0.03);
+      });
+    } catch {
+      // Ignored
+    }
+  }
+
+  // SFX: Balloon Pop (snappy rubber rupture)
+  public playPopSound() {
+    if (this.isMuted) return;
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+
+      // Quick snappy burst
+      const noiseBufferSize = Math.floor(ctx.sampleRate * 0.15);
+      const noiseBuffer = ctx.createBuffer(1, noiseBufferSize, ctx.sampleRate);
+      const noiseData = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseBufferSize; i++) {
+        noiseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.03));
+      }
+
+      const noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+
+      const popFilter = ctx.createBiquadFilter();
+      popFilter.type = 'bandpass';
+      popFilter.frequency.setValueAtTime(2200, now);
+      popFilter.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+
+      const popGain = ctx.createGain();
+      popGain.gain.setValueAtTime(0.7, now);
+      popGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      noiseSource.connect(popFilter);
+      popFilter.connect(popGain);
+      popGain.connect(ctx.destination);
+
+      noiseSource.start(now);
+
+      // Low rubber tension release
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(380, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.09);
+
+      oscGain.gain.setValueAtTime(0.5, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.11);
     } catch {
       // Ignored
     }
@@ -239,33 +400,6 @@ class SoundEngine {
         osc.start(now + idx * 0.08);
         osc.stop(now + idx * 0.08 + 0.45);
       });
-    } catch {
-      // Ignored
-    }
-  }
-
-  // SFX: Balloon Pop
-  public playPopSound() {
-    if (this.isMuted) return;
-    const ctx = this.getAudioContext();
-    if (!ctx) return;
-
-    try {
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(380, now);
-      osc.frequency.exponentialRampToValueAtTime(70, now + 0.1);
-
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.13);
     } catch {
       // Ignored
     }

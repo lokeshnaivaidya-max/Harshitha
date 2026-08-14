@@ -9,7 +9,7 @@ export const Footer: React.FC = () => {
   const { setIsAdminOpen } = usePhotoContext();
 
   const handleFinalCelebration = () => {
-    soundEngine.playSparkleSound();
+    soundEngine.playPartyPopperSound();
     triggerBirthdayConfetti();
     setTimeout(() => {
       triggerHeartBurst();

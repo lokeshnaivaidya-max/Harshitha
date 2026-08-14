@@ -33,7 +33,7 @@ export const InteractiveCake: React.FC = () => {
       setIsCutting(false);
       triggerCakeSliceCelebration();
       setShowCelebrationBanner(true);
-      soundEngine.playSparkleSound();
+      soundEngine.playPartyPopperSound();
     }, 950);
   };
 
