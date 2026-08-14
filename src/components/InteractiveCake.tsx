@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cake, Flame, Wind, RotateCcw, Heart, CheckCircle2, PartyPopper, Sparkles, Utensils } from 'lucide-react';
+import { Cake, Flame, Wind, RotateCcw, Heart, CheckCircle2, PartyPopper, Sparkles, Utensils, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundEngine } from '../utils/sound';
 import { triggerCandleExtinguishBurst, triggerCakeSliceCelebration } from '../utils/confetti';
@@ -11,6 +11,7 @@ export const InteractiveCake: React.FC = () => {
   const [isCutting, setIsCutting] = useState(false);
   const [showCelebrationBanner, setShowCelebrationBanner] = useState(false);
   const [eatenSlices, setEatenSlices] = useState<number[]>([]);
+  const [centerpieceEaten, setCenterpieceEaten] = useState(false);
 
   // Handle Blow Candle
   const handleBlowCandle = () => {
@@ -26,21 +27,28 @@ export const InteractiveCake: React.FC = () => {
     setIsCutting(true);
     soundEngine.playCakeSliceSound();
 
-    // Knife cutting animation triggers the split
+    // Knife cutting animation triggers the realistic slice split
     setTimeout(() => {
       setIsCakeCut(true);
       setIsCutting(false);
       triggerCakeSliceCelebration();
       setShowCelebrationBanner(true);
       soundEngine.playSparkleSound();
-    }, 900);
+    }, 950);
   };
 
-  // Handle Eat Slice
+  // Handle Eat Served Slice
   const handleEatSlice = (index: number) => {
     if (eatenSlices.includes(index)) return;
     soundEngine.playSparkleSound();
     setEatenSlices((prev) => [...prev, index]);
+  };
+
+  // Handle Eat Centerpiece Slice
+  const handleEatCenterpiece = () => {
+    if (centerpieceEaten) return;
+    soundEngine.playSparkleSound();
+    setCenterpieceEaten(true);
   };
 
   // Reset Ritual
@@ -49,6 +57,7 @@ export const InteractiveCake: React.FC = () => {
     setIsCandleLit(true);
     setIsCakeCut(false);
     setIsCutting(false);
+    setCenterpieceEaten(false);
     setEatenSlices([]);
     setShowCelebrationBanner(false);
   };
@@ -56,7 +65,7 @@ export const InteractiveCake: React.FC = () => {
   return (
     <section id="cake" className="py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto relative">
       {/* Background Ambient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
       <div className="text-center space-y-3 mb-12">
@@ -73,8 +82,8 @@ export const InteractiveCake: React.FC = () => {
       </div>
 
       {/* Interactive Cake Stage */}
-      <div className="relative glass-panel rounded-3xl p-6 sm:p-10 md:p-12 border border-rose-500/20 text-center shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
-        {/* Status Prompt / Hint */}
+      <div className="relative glass-panel rounded-3xl p-6 sm:p-10 md:p-12 border border-rose-500/20 text-center shadow-[0_20px_60px_rgba(0,0,0,0.6)] overflow-hidden">
+        {/* Status Prompt */}
         <div className="mb-8">
           <AnimatePresence mode="wait">
             {isCandleLit && (
@@ -112,7 +121,7 @@ export const InteractiveCake: React.FC = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 text-sm font-medium shadow-[0_0_20px_rgba(251,191,36,0.3)]"
               >
                 <Utensils className="w-4 h-4 text-amber-400 animate-spin" />
-                <span>Cutting the cake into delicious halves and slices... ✨</span>
+                <span>Golden knife slicing through the layers into separate pieces... ✨</span>
               </motion.div>
             )}
 
@@ -125,22 +134,22 @@ export const InteractiveCake: React.FC = () => {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-sm font-medium shadow-[0_0_20px_rgba(16,185,129,0.3)]"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>The cake is sliced in half! Click a slice below to take a bite! 🍰❤️</span>
+                <span>The cake is sliced into separate pieces! Click a slice to take a bite! 🍰❤️</span>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* The Cake Stage Container */}
-        <div className="relative min-h-[340px] flex flex-col items-center justify-end select-none my-4">
-          {/* Animated Golden Cake Knife cutting through the center */}
+        {/* The 3D Interactive Cake Model Container */}
+        <div className="relative min-h-[380px] sm:min-h-[400px] flex flex-col items-center justify-end select-none my-4">
+          {/* Animated Golden Cake Knife cutting smoothly through center */}
           <AnimatePresence>
             {isCutting && (
               <motion.div
-                initial={{ y: -140, opacity: 0, rotate: -25 }}
-                animate={{ y: 80, opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, y: 120 }}
-                transition={{ duration: 0.85, ease: 'easeInOut' }}
+                initial={{ y: -160, opacity: 0, rotate: -25 }}
+                animate={{ y: 90, opacity: 1, rotate: 0 }}
+                exit={{ opacity: 0, y: 130 }}
+                transition={{ duration: 0.9, ease: 'easeInOut' }}
                 className="absolute z-50 pointer-events-none flex flex-col items-center"
               >
                 {/* Knife Handle */}
@@ -149,11 +158,11 @@ export const InteractiveCake: React.FC = () => {
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mx-auto mt-2" />
                 </div>
                 {/* Knife Guard */}
-                <div className="w-10 h-2 bg-gradient-to-r from-amber-300 via-amber-100 to-amber-400 rounded-sm shadow-md" />
+                <div className="w-11 h-2.5 bg-gradient-to-r from-amber-300 via-amber-100 to-amber-400 rounded-sm shadow-md" />
                 {/* Knife Blade */}
-                <div className="w-3 h-28 bg-gradient-to-r from-slate-200 via-white to-slate-300 border-x border-b border-amber-300/60 shadow-[0_0_15px_rgba(255,255,255,0.8)] [clip-path:polygon(0_0,100%_0,100%_85%,50%_100%,0_85%)]" />
+                <div className="w-3.5 h-32 bg-gradient-to-r from-slate-200 via-white to-slate-300 border-x border-b border-amber-300/60 shadow-[0_0_20px_rgba(255,255,255,0.9)] [clip-path:polygon(0_0,100%_0,100%_85%,50%_100%,0_85%)]" />
                 {/* Slice Sparkles */}
-                <Sparkles className="w-6 h-6 text-amber-300 animate-ping absolute -bottom-2" />
+                <Sparkles className="w-7 h-7 text-amber-300 animate-ping absolute -bottom-3" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -187,29 +196,34 @@ export const InteractiveCake: React.FC = () => {
             </div>
           </div>
 
-          {/* CAKE STRUCTURE: Split into Left and Right Halves upon cutting */}
+          {/* CAKE STRUCTURE: Multi-Part Slice Model */}
           <div className="relative flex items-end justify-center z-20">
             {/* LEFT HALF OF CAKE */}
             <motion.div
               animate={{
-                x: isCakeCut ? -36 : 0,
-                rotate: isCakeCut ? -3 : 0,
+                x: isCakeCut ? -48 : 0,
+                rotate: isCakeCut ? -5 : 0,
+                y: isCakeCut ? -4 : 0,
               }}
-              transition={{ duration: 0.8, type: 'spring', bounce: 0.3 }}
-              className="flex flex-col items-end"
+              transition={{ duration: 0.85, type: 'spring', bounce: 0.35 }}
+              className="flex flex-col items-end relative"
             >
               {/* Top Tier - Left Half */}
-              <div className="w-24 sm:w-28 h-14 bg-gradient-to-r from-rose-400 via-pink-300 to-pink-200 rounded-tl-2xl shadow-lg border-t border-l border-b border-pink-200/40 relative overflow-hidden flex items-center justify-around pr-2">
-                <div className="absolute top-0 left-0 right-0 h-4 bg-white/90 rounded-bl-lg shadow-sm" />
-                {/* Cross-section cut edge on right side if cut */}
+              <div className="w-24 sm:w-32 h-14 bg-gradient-to-r from-rose-400 via-pink-300 to-pink-200 rounded-tl-2xl shadow-lg border-t border-l border-b border-pink-200/40 relative overflow-hidden flex items-center justify-around pr-2">
+                {/* Frosting Drips */}
+                <div className="absolute top-0 left-0 right-0 h-4 bg-white/95 rounded-bl-lg shadow-sm" />
+                
+                {/* Exposed Cut Inner Cross-Section on right edge */}
                 {isCakeCut && (
-                  <div className="absolute right-0 top-0 bottom-0 w-3 bg-gradient-to-l from-amber-200/80 via-rose-300 to-rose-400 border-l border-white/50 flex flex-col justify-between py-1">
-                    <div className="h-1 bg-amber-100/90 rounded" />
-                    <div className="h-1 bg-rose-700/80 rounded" />
-                    <div className="h-1 bg-amber-100/90 rounded" />
+                  <div className="absolute right-0 top-0 bottom-0 w-4 bg-[#3a0d1e] border-l border-amber-300/50 flex flex-col justify-between py-1 px-0.5 shadow-inner">
+                    <div className="h-1.5 bg-rose-200 rounded-xs" />
+                    <div className="h-2 bg-[#881337] rounded-xs" />
+                    <div className="h-1.5 bg-amber-100 rounded-xs" />
+                    <div className="h-2 bg-[#4c0519] rounded-xs" />
                   </div>
                 )}
-                {/* Pearls */}
+
+                {/* Decorative Pearls */}
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div
                     key={i}
@@ -219,7 +233,7 @@ export const InteractiveCake: React.FC = () => {
               </div>
 
               {/* Bottom Tier - Left Half */}
-              <div className="w-32 sm:w-40 h-20 bg-gradient-to-r from-[#4c1d32] via-[#702446] to-[#5a1b37] rounded-tl-xl shadow-xl border-t border-l border-b border-rose-400/30 relative overflow-hidden flex items-center justify-start pl-4">
+              <div className="w-34 sm:w-44 h-22 bg-gradient-to-r from-[#4c1d32] via-[#702446] to-[#5a1b37] rounded-tl-2xl shadow-xl border-t border-l border-b border-rose-400/30 relative overflow-hidden flex items-center justify-start pl-4">
                 <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-rose-100 via-pink-50 to-rose-100 rounded-bl-md shadow-inner" />
                 
                 {/* Inscription Left */}
@@ -227,44 +241,97 @@ export const InteractiveCake: React.FC = () => {
                   Happy B'day
                 </span>
 
-                {/* Inner sponge layers cross section */}
+                {/* Detailed Inner sponge layers cross section */}
                 {isCakeCut && (
-                  <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-[#360e20] to-[#5a1b37] border-l border-amber-400/40 flex flex-col justify-between py-1 px-0.5">
-                    <div className="h-2 bg-rose-200/90 rounded-sm" />
-                    <div className="h-2 bg-[#e11d48]/80 rounded-sm" />
-                    <div className="h-2 bg-amber-200/80 rounded-sm" />
-                    <div className="h-2 bg-[#2d091b] rounded-sm" />
+                  <div className="absolute right-0 top-0 bottom-0 w-5 bg-[#2a0817] border-l-2 border-amber-400/60 flex flex-col justify-between py-1 px-0.5 shadow-inner">
+                    <div className="h-2.5 bg-rose-200/95 rounded-xs" />
+                    <div className="h-2 bg-[#be123c] rounded-xs" />
+                    <div className="h-2.5 bg-amber-100/90 rounded-xs" />
+                    <div className="h-2 bg-[#9f1239] rounded-xs" />
+                    <div className="h-2.5 bg-[#4c0519] rounded-xs" />
                   </div>
                 )}
               </div>
             </motion.div>
 
-            {/* CUT GAP / KNIFE SLICE LINE */}
-            {!isCakeCut && (
-              <div className="w-0.5 h-34 bg-rose-200/40 z-30" />
-            )}
+            {/* SEPARATED CENTERPIECE SLICE (Pulls forward distinctly on cut) */}
+            <AnimatePresence>
+              {isCakeCut && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.7, y: 0, x: 0 }}
+                  animate={{
+                    opacity: 1,
+                    scale: 1,
+                    y: 32,
+                    x: 0,
+                    rotate: -3,
+                  }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  transition={{ delay: 0.15, duration: 0.7, type: 'spring', bounce: 0.4 }}
+                  onClick={handleEatCenterpiece}
+                  className="relative z-40 mx-[-12px] mb-[-16px] cursor-pointer group/slice"
+                  title="Click to taste the VIP centerpiece slice!"
+                >
+                  {/* Golden Dessert Plate under slice */}
+                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-28 h-6 bg-gradient-to-r from-amber-300 via-amber-100 to-amber-400 rounded-full border border-amber-400 shadow-xl pointer-events-none" />
+
+                  {/* Cut Slice Body */}
+                  <div className="relative w-20 sm:w-24 h-32 flex flex-col items-center justify-end transform transition-transform group-hover/slice:scale-105 group-hover/slice:-translate-y-2">
+                    {/* Top Cream Swirl & Strawberry */}
+                    <div className="relative -mb-2 z-20 flex flex-col items-center">
+                      <span className="text-xl animate-bounce">🍓</span>
+                      <div className="w-5 h-3 bg-white rounded-full shadow-sm" />
+                    </div>
+
+                    {/* Top Tier Slice Section */}
+                    <div className="w-16 h-10 bg-gradient-to-b from-pink-200 via-rose-300 to-[#881337] rounded-t-lg border border-amber-300/60 shadow-md relative overflow-hidden px-1 py-0.5 flex flex-col justify-between">
+                      <div className="h-1 bg-white/90 rounded-full" />
+                      <div className="h-1.5 bg-[#4c0519] rounded-xs" />
+                      <div className="h-1 bg-amber-100 rounded-full" />
+                    </div>
+
+                    {/* Bottom Tier Slice Section */}
+                    <div className="w-20 h-16 bg-gradient-to-b from-[#702446] via-[#be123c] to-[#2a0817] rounded-b-lg border border-amber-400/80 shadow-2xl relative overflow-hidden px-1.5 py-1 flex flex-col justify-between">
+                      <div className="h-2 bg-rose-100 rounded-xs" />
+                      <div className="h-2 bg-[#9f1239] rounded-xs" />
+                      <div className="h-2 bg-amber-100/90 rounded-xs" />
+                      <div className="h-2.5 bg-[#4c0519] rounded-xs" />
+                    </div>
+
+                    {/* Slice Badge */}
+                    <div className="absolute -top-3 right-0 bg-gradient-to-r from-amber-500 to-rose-500 text-white font-bold text-[9px] px-2 py-0.5 rounded-full shadow-md border border-white/20 whitespace-nowrap">
+                      {centerpieceEaten ? '✨ Tasted!' : '🍴 Fresh Slice'}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* RIGHT HALF OF CAKE */}
             <motion.div
               animate={{
-                x: isCakeCut ? 36 : 0,
-                rotate: isCakeCut ? 3 : 0,
+                x: isCakeCut ? 48 : 0,
+                rotate: isCakeCut ? 5 : 0,
+                y: isCakeCut ? -4 : 0,
               }}
-              transition={{ duration: 0.8, type: 'spring', bounce: 0.3 }}
-              className="flex flex-col items-start"
+              transition={{ duration: 0.85, type: 'spring', bounce: 0.35 }}
+              className="flex flex-col items-start relative"
             >
               {/* Top Tier - Right Half */}
-              <div className="w-24 sm:w-28 h-14 bg-gradient-to-r from-pink-200 via-pink-300 to-rose-400 rounded-tr-2xl shadow-lg border-t border-r border-b border-pink-200/40 relative overflow-hidden flex items-center justify-around pl-2">
-                <div className="absolute top-0 left-0 right-0 h-4 bg-white/90 rounded-br-lg shadow-sm" />
-                {/* Cross-section cut edge on left side if cut */}
+              <div className="w-24 sm:w-32 h-14 bg-gradient-to-r from-pink-200 via-pink-300 to-rose-400 rounded-tr-2xl shadow-lg border-t border-r border-b border-pink-200/40 relative overflow-hidden flex items-center justify-around pl-2">
+                <div className="absolute top-0 left-0 right-0 h-4 bg-white/95 rounded-br-lg shadow-sm" />
+                
+                {/* Exposed Cut Inner Cross-Section on left edge */}
                 {isCakeCut && (
-                  <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-amber-200/80 via-rose-300 to-rose-400 border-r border-white/50 flex flex-col justify-between py-1">
-                    <div className="h-1 bg-amber-100/90 rounded" />
-                    <div className="h-1 bg-rose-700/80 rounded" />
-                    <div className="h-1 bg-amber-100/90 rounded" />
+                  <div className="absolute left-0 top-0 bottom-0 w-4 bg-[#3a0d1e] border-r border-amber-300/50 flex flex-col justify-between py-1 px-0.5 shadow-inner">
+                    <div className="h-1.5 bg-rose-200 rounded-xs" />
+                    <div className="h-2 bg-[#881337] rounded-xs" />
+                    <div className="h-1.5 bg-amber-100 rounded-xs" />
+                    <div className="h-2 bg-[#4c0519] rounded-xs" />
                   </div>
                 )}
-                {/* Pearls */}
+
+                {/* Decorative Pearls */}
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div
                     key={i}
@@ -274,7 +341,7 @@ export const InteractiveCake: React.FC = () => {
               </div>
 
               {/* Bottom Tier - Right Half */}
-              <div className="w-32 sm:w-40 h-20 bg-gradient-to-r from-[#5a1b37] via-[#702446] to-[#4c1d32] rounded-tr-xl shadow-xl border-t border-r border-b border-rose-400/30 relative overflow-hidden flex items-center justify-end pr-4">
+              <div className="w-34 sm:w-44 h-22 bg-gradient-to-r from-[#5a1b37] via-[#702446] to-[#4c1d32] rounded-tr-2xl shadow-xl border-t border-r border-b border-rose-400/30 relative overflow-hidden flex items-center justify-end pr-4">
                 <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-rose-100 via-pink-50 to-rose-100 rounded-br-md shadow-inner" />
                 
                 {/* Inscription Right */}
@@ -282,13 +349,14 @@ export const InteractiveCake: React.FC = () => {
                   Harshitha!
                 </span>
 
-                {/* Inner sponge layers cross section */}
+                {/* Detailed Inner sponge layers cross section */}
                 {isCakeCut && (
-                  <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#360e20] to-[#5a1b37] border-r border-amber-400/40 flex flex-col justify-between py-1 px-0.5">
-                    <div className="h-2 bg-rose-200/90 rounded-sm" />
-                    <div className="h-2 bg-[#e11d48]/80 rounded-sm" />
-                    <div className="h-2 bg-amber-200/80 rounded-sm" />
-                    <div className="h-2 bg-[#2d091b] rounded-sm" />
+                  <div className="absolute left-0 top-0 bottom-0 w-5 bg-[#2a0817] border-r-2 border-amber-400/60 flex flex-col justify-between py-1 px-0.5 shadow-inner">
+                    <div className="h-2.5 bg-rose-200/95 rounded-xs" />
+                    <div className="h-2 bg-[#be123c] rounded-xs" />
+                    <div className="h-2.5 bg-amber-100/90 rounded-xs" />
+                    <div className="h-2 bg-[#9f1239] rounded-xs" />
+                    <div className="h-2.5 bg-[#4c0519] rounded-xs" />
                   </div>
                 )}
               </div>
@@ -296,11 +364,11 @@ export const InteractiveCake: React.FC = () => {
           </div>
 
           {/* CAKE STAND / PLATTER */}
-          <div className="w-72 sm:w-96 h-4 bg-gradient-to-r from-amber-400 via-yellow-100 to-amber-400 rounded-full shadow-[0_10px_25px_rgba(251,191,36,0.3)] border border-amber-300 relative z-10 -mt-0.5" />
-          <div className="w-24 sm:w-32 h-6 bg-gradient-to-b from-amber-300 to-amber-500 rounded-b-xl shadow-md border-x border-b border-amber-400" />
+          <div className="w-80 sm:w-[450px] h-4 bg-gradient-to-r from-amber-400 via-yellow-100 to-amber-400 rounded-full shadow-[0_10px_25px_rgba(251,191,36,0.35)] border border-amber-300 relative z-10 -mt-0.5" />
+          <div className="w-28 sm:w-36 h-7 bg-gradient-to-b from-amber-300 to-amber-500 rounded-b-2xl shadow-md border-x border-b border-amber-400" />
         </div>
 
-        {/* SERVED SLICES TRAY (Appears when cake is cut into half & slices) */}
+        {/* SERVED SLICES TRAY (Appears once cake is cut) */}
         <AnimatePresence>
           {isCakeCut && (
             <motion.div
@@ -314,7 +382,7 @@ export const InteractiveCake: React.FC = () => {
                   🍰 Freshly Cut Slices for Harshitha & Friends
                 </span>
                 <p className="text-xs text-rose-200/70 mt-1">
-                  Click a slice to take a bite!
+                  Click a slice to take a delicious celebratory bite!
                 </p>
               </div>
 
@@ -448,7 +516,7 @@ export const InteractiveCake: React.FC = () => {
             }`}
           >
             <Cake className="w-4 h-4" />
-            <span>{isCakeCut ? 'Cake Sliced in Half! 🍰' : isCutting ? 'Cutting Cake... 🔪' : 'Cut Birthday Cake 🔪'}</span>
+            <span>{isCakeCut ? 'Cake Sliced into Pieces! 🍰' : isCutting ? 'Cutting Cake... 🔪' : 'Cut Birthday Cake 🔪'}</span>
           </button>
 
           {/* Reset Ritual Button */}
@@ -488,4 +556,3 @@ export const InteractiveCake: React.FC = () => {
     </section>
   );
 };
-

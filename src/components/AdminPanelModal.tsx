@@ -6,9 +6,6 @@ import {
   Trash2,
   Check,
   Star,
-  Sparkles,
-  ArrowUp,
-  ArrowDown,
   RefreshCw,
   FolderDown,
   FolderUp,
@@ -19,8 +16,11 @@ import {
   Heart,
   Sliders,
   CheckCircle,
+  Sparkles,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { usePhotoContext, AddPhotoPayload } from '../context/PhotoContext';
 import { formatBytes } from '../utils/photoStorage';
 import { PhotoMemory } from '../data/harshitha';
@@ -45,19 +45,24 @@ export const AdminPanelModal: React.FC = () => {
     isAdminOpen,
     setIsAdminOpen,
     addPhotos,
+    replacePhotoSlot,
     updatePhoto,
     deletePhoto,
     setHeroPhotoFromUrl,
+    setHeroPhotoFromFile,
     resetHeroPhoto,
     reorderPhotos,
     resetAllPhotosToDefault,
     exportBackupJSON,
     importBackupJSON,
+    templatePlaceholderCount,
+    customPhotoCount,
   } = usePhotoContext();
 
   const [activeTab, setActiveTab] = useState<'upload' | 'manage' | 'hero' | 'settings'>('upload');
   const [isDragging, setIsDragging] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingUploadItem[]>([]);
+  const [replaceTemplates, setReplaceTemplates] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null);
@@ -66,6 +71,8 @@ export const AdminPanelModal: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const heroFileInputRef = useRef<HTMLInputElement>(null);
   const backupFileInputRef = useRef<HTMLInputElement>(null);
+  const slotReplaceInputRef = useRef<HTMLInputElement>(null);
+  const slotToReplaceRef = useRef<string | null>(null);
 
   if (!isAdminOpen) return null;
 
@@ -73,7 +80,7 @@ export const AdminPanelModal: React.FC = () => {
     setStatusMessage({ type, text });
     setTimeout(() => {
       setStatusMessage(null);
-    }, 4000);
+    }, 4500);
   };
 
   // Process dropped/selected files
@@ -100,15 +107,15 @@ export const AdminPanelModal: React.FC = () => {
         title: nameWithoutExt.charAt(0).toUpperCase() + nameWithoutExt.slice(1),
         caption: 'A precious moment with Harshitha.',
         category: 'smiles',
-        date: 'Today',
+        date: 'Special Memory',
         location: 'With Harshitha',
-        setAsHero: false,
+        setAsHero: idx === 0 && customPhotoCount === 0, // Auto-suggest hero if first photo
       };
     });
 
     setPendingFiles((prev) => [...prev, ...newPendingItems]);
     soundEngine.playSparkleSound();
-    showToast(`Added ${newPendingItems.length} photo(s) to staging. Review and save below!`);
+    showToast(`Added ${newPendingItems.length} photo(s) to staging! Click "Save Photos" below.`);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -135,7 +142,6 @@ export const AdminPanelModal: React.FC = () => {
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       processFiles(e.target.files);
-      // Reset input value so same files can be re-selected if needed
       e.target.value = '';
     }
   };
@@ -170,64 +176,63 @@ export const AdminPanelModal: React.FC = () => {
         setAsHero: p.setAsHero,
       }));
 
-      const success = await addPhotos(payloads);
+      const success = await addPhotos(payloads, replaceTemplates);
       if (success) {
-        // Clean up object URLs
         pendingFiles.forEach((p) => URL.revokeObjectURL(p.previewUrl));
         setPendingFiles([]);
-        showToast(`Successfully uploaded ${payloads.length} photo(s) to Harshitha's website!`);
+        showToast(
+          replaceTemplates && templatePlaceholderCount > 0
+            ? `Successfully replaced template slots with your ${payloads.length} photo(s)!`
+            : `Successfully added ${payloads.length} photo(s) to Harshitha's gallery!`
+        );
         setActiveTab('manage');
       } else {
-        showToast('Failed to save some photos. Please try again.', 'error');
+        showToast('Failed to save photos. Please try again.', 'error');
       }
     } catch {
-      showToast('An error occurred during upload.', 'error');
+      showToast('An error occurred during photo processing.', 'error');
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Hero direct upload
-  const handleHeroDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      if (file.type.startsWith('image/')) {
-        await addPhotos([
-          {
-            file,
-            title: "Harshitha's Portrait",
-            caption: 'The birthday star.',
-            category: 'smiles',
-            setAsHero: true,
-          },
-        ]);
-        showToast("Hero photo updated successfully!");
+  // Slot direct replace
+  const handleTriggerSlotReplace = (photoId: string) => {
+    slotToReplaceRef.current = photoId;
+    slotReplaceInputRef.current?.click();
+  };
+
+  const handleSlotReplaceFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0 && slotToReplaceRef.current) {
+      const file = e.target.files[0];
+      const slotId = slotToReplaceRef.current;
+      setIsSaving(true);
+      try {
+        const ok = await replacePhotoSlot(slotId, file);
+        if (ok) {
+          showToast('Photo updated and saved successfully!');
+        }
+      } finally {
+        setIsSaving(false);
+        slotToReplaceRef.current = null;
+        e.target.value = '';
       }
     }
   };
 
+  // Hero direct upload
   const handleHeroInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       if (file.type.startsWith('image/')) {
-        await addPhotos([
-          {
-            file,
-            title: "Harshitha's Portrait",
-            caption: 'The birthday star.',
-            category: 'smiles',
-            setAsHero: true,
-          },
-        ]);
+        await setHeroPhotoFromFile(file);
         showToast("Hero photo updated successfully!");
       }
       e.target.value = '';
     }
   };
 
-  // Move photo up/down in ordering
+  // Move photo up/down
   const handleMovePhoto = async (index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= photos.length) return;
@@ -273,6 +278,15 @@ export const AdminPanelModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-3 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-xl">
+      {/* Hidden file input for slot replacement */}
+      <input
+        ref={slotReplaceInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleSlotReplaceFileChange}
+        className="hidden"
+      />
+
       {/* Modal Container */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -291,7 +305,7 @@ export const AdminPanelModal: React.FC = () => {
                 Photo Admin Studio
               </h2>
               <p className="text-xs text-rose-300/70 font-light">
-                Drag & drop photos of Harshitha • Large files supported (&gt;5MB, 20MB+)
+                Fill templates & save real photos of Harshitha • Large files supported
               </p>
             </div>
           </div>
@@ -316,7 +330,7 @@ export const AdminPanelModal: React.FC = () => {
             }`}
           >
             <Upload className="w-4 h-4" />
-            <span>Drag & Drop Upload {pendingFiles.length > 0 && `(${pendingFiles.length})`}</span>
+            <span>Upload Photos {pendingFiles.length > 0 && `(${pendingFiles.length})`}</span>
           </button>
 
           <button
@@ -328,7 +342,7 @@ export const AdminPanelModal: React.FC = () => {
             }`}
           >
             <Layers className="w-4 h-4" />
-            <span>Manage Gallery ({photos.length})</span>
+            <span>Gallery Slots ({photos.length})</span>
           </button>
 
           <button
@@ -376,7 +390,7 @@ export const AdminPanelModal: React.FC = () => {
 
         {/* Modal Body Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
-          {/* TAB 1: DRAG & DROP UPLOAD */}
+          {/* TAB 1: UPLOAD */}
           {activeTab === 'upload' && (
             <div className="space-y-6">
               {/* Dropzone Area */}
@@ -406,27 +420,53 @@ export const AdminPanelModal: React.FC = () => {
 
                 <div className="space-y-1.5">
                   <h3 className="text-base sm:text-lg font-semibold text-rose-100">
-                    Drag & Drop Harshitha's Pictures Here
+                    Drag & Drop Photos of Harshitha Here
                   </h3>
                   <p className="text-xs sm:text-sm text-rose-200/60 max-w-md mx-auto font-light">
-                    Select one or multiple high-resolution photos directly from your device.
+                    Select photos from your device to save them into the template frames.
                   </p>
                   <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[11px] text-amber-300/80">
                     <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                      ⚡ Supports files &gt;5MB, 10MB, 25MB+
+                      ⚡ Saves persistently in browser storage
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20">
-                      🔒 Stored locally in your browser
+                      ✨ Auto-fills template cards
                     </span>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  className="mt-2 px-5 py-2.5 rounded-full text-xs font-semibold bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md hover:scale-105 transition"
+                  className="mt-2 px-6 py-2.5 rounded-full text-xs font-semibold bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md hover:scale-105 transition cursor-pointer"
                 >
-                  Browse Files on Device
+                  Browse Device Files
                 </button>
+              </div>
+
+              {/* Upload Mode Preference */}
+              <div className="p-4 rounded-2xl bg-black/30 border border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={replaceTemplates}
+                    onChange={(e) => setReplaceTemplates(e.target.checked)}
+                    className="w-4 h-4 rounded border-rose-500/40 text-rose-500 focus:ring-rose-400"
+                  />
+                  <div>
+                    <span className="text-xs sm:text-sm font-semibold text-rose-100 block">
+                      Replace placeholder templates with these uploaded photos
+                    </span>
+                    <span className="text-[11px] text-rose-300/60 block font-light">
+                      Fills the existing template slots instead of adding extra blank cards.
+                    </span>
+                  </div>
+                </label>
+
+                {templatePlaceholderCount > 0 && (
+                  <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30 text-[11px] font-semibold shrink-0">
+                    {templatePlaceholderCount} Template slots open
+                  </span>
+                )}
               </div>
 
               {/* Pending Uploads Staging Area */}
@@ -435,7 +475,7 @@ export const AdminPanelModal: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <h3 className="font-serif font-bold text-rose-100 text-base sm:text-lg flex items-center gap-2">
                       <FileImage className="w-5 h-5 text-rose-400" />
-                      <span>Ready to Add ({pendingFiles.length} Photos)</span>
+                      <span>Ready to Save ({pendingFiles.length} Photos)</span>
                     </h3>
 
                     <button
@@ -472,7 +512,7 @@ export const AdminPanelModal: React.FC = () => {
                         <div className="flex-1 space-y-2 text-xs">
                           <div>
                             <label className="block text-[10px] uppercase font-semibold text-rose-300/70 mb-0.5">
-                              Title
+                              Title / Memory Name
                             </label>
                             <input
                               type="text"
@@ -527,7 +567,7 @@ export const AdminPanelModal: React.FC = () => {
                                   }
                                   className="rounded border-rose-500/40 text-rose-500 focus:ring-rose-400"
                                 />
-                                <span className="text-[11px] font-medium">Set as Hero Pic ⭐</span>
+                                <span className="text-[11px] font-medium">Hero Pic ⭐</span>
                               </label>
                             </div>
                           </div>
@@ -538,7 +578,7 @@ export const AdminPanelModal: React.FC = () => {
                           type="button"
                           onClick={() => removePendingItem(item.id)}
                           className="p-1 rounded-lg text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 transition shrink-0"
-                          title="Remove photo"
+                          title="Remove photo from staging"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -546,7 +586,7 @@ export const AdminPanelModal: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Save All Button */}
+                  {/* Save Button */}
                   <div className="pt-4 flex justify-end">
                     <button
                       type="button"
@@ -559,7 +599,7 @@ export const AdminPanelModal: React.FC = () => {
                       ) : (
                         <Check className="w-4 h-4" />
                       )}
-                      <span>Save & Add All {pendingFiles.length} Photos to Website</span>
+                      <span>Save & Apply All {pendingFiles.length} Photos to Website</span>
                     </button>
                   </div>
                 </div>
@@ -570,29 +610,29 @@ export const AdminPanelModal: React.FC = () => {
           {/* TAB 2: MANAGE GALLERY */}
           {activeTab === 'manage' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="font-serif font-bold text-rose-100 text-lg">
-                    Active Gallery Photos ({photos.length})
+                    Active Gallery Slots ({photos.length})
                   </h3>
                   <p className="text-xs text-rose-300/60 font-light">
-                    Edit titles, reorder photos, set as hero, or delete items.
+                    Click "Replace Image" on any slot to upload your photo directly.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setActiveTab('upload')}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-500/20 border border-rose-400/40 text-rose-200 hover:bg-rose-500/30 transition cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-rose-500/20 border border-rose-400/40 text-rose-200 hover:bg-rose-500/30 transition cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add More Photos</span>
+                  <span>Upload More Photos</span>
                 </button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {photos.map((photo, index) => {
-                  const isCustom = photo.id.startsWith('custom-photo-');
+                  const isTemplate = photo.id.startsWith('photo-') && photo.url.startsWith('/images/');
                   const isEditing = editingPhotoId === photo.id;
 
                   return (
@@ -613,11 +653,28 @@ export const AdminPanelModal: React.FC = () => {
                             <span>Current Hero</span>
                           </div>
                         )}
-                        {isCustom && (
-                          <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-rose-500/80 backdrop-blur-md text-white font-medium text-[10px]">
-                            Uploaded Pic
-                          </div>
-                        )}
+                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full backdrop-blur-md text-[10px] font-medium">
+                          {isTemplate ? (
+                            <span className="bg-amber-500/80 text-stone-900 px-1.5 py-0.5 rounded font-bold">
+                              Template Placeholder
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-500/80 text-white px-1.5 py-0.5 rounded font-bold">
+                              Saved Photo
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Replace Image Button directly on card */}
+                        <button
+                          type="button"
+                          onClick={() => handleTriggerSlotReplace(photo.id)}
+                          className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-black/75 hover:bg-rose-500 text-white text-[10px] font-semibold border border-white/20 shadow-md flex items-center gap-1 cursor-pointer transition"
+                          title="Upload new image for this slot"
+                        >
+                          <Upload className="w-3 h-3 text-amber-300" />
+                          <span>{isTemplate ? 'Add Pic' : 'Replace'}</span>
+                        </button>
                       </div>
 
                       {/* Photo Details (View or Edit Mode) */}
@@ -712,7 +769,7 @@ export const AdminPanelModal: React.FC = () => {
                             className="px-2 py-1 rounded bg-amber-500/15 hover:bg-amber-500/30 text-amber-200 text-[11px] font-medium transition cursor-pointer"
                             title="Use as main hero portrait photo"
                           >
-                            Set as Hero
+                            Set Hero
                           </button>
 
                           <button
@@ -731,7 +788,7 @@ export const AdminPanelModal: React.FC = () => {
                             onClick={async () => {
                               if (confirm(`Delete "${photo.title}"?`)) {
                                 await deletePhoto(photo.id);
-                                showToast('Photo deleted.');
+                                showToast('Photo removed.');
                               }
                             }}
                             className="p-1 rounded text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 transition cursor-pointer"
@@ -775,14 +832,9 @@ export const AdminPanelModal: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Hero Controls & Direct Drop */}
+                {/* Hero Controls */}
                 <div className="md:col-span-7 space-y-4">
                   <div
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onDrop={handleHeroDrop}
                     onClick={() => heroFileInputRef.current?.click()}
                     className="p-6 rounded-2xl border-2 border-dashed border-rose-500/30 hover:border-rose-400 hover:bg-rose-500/10 text-center cursor-pointer transition space-y-2"
                   >
@@ -795,10 +847,10 @@ export const AdminPanelModal: React.FC = () => {
                     />
                     <Star className="w-8 h-8 text-amber-300 mx-auto animate-pulse" />
                     <h4 className="text-sm font-semibold text-rose-100">
-                      Drop New Hero Photo Here
+                      Upload New Hero Spotlight Photo
                     </h4>
                     <p className="text-xs text-rose-300/60">
-                      Or click to select a high-res picture from your device (&gt;5MB supported)
+                      Click to choose a high-resolution picture from your device
                     </p>
                   </div>
 
@@ -880,7 +932,7 @@ export const AdminPanelModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Reset to Factory Defaults */}
+              {/* Reset */}
               <div className="p-5 rounded-2xl border border-rose-500/20 bg-rose-950/20 space-y-3">
                 <div className="flex items-center gap-2 text-rose-400">
                   <AlertCircle className="w-5 h-5" />
@@ -889,14 +941,14 @@ export const AdminPanelModal: React.FC = () => {
                   </h4>
                 </div>
                 <p className="text-xs text-rose-300/70 font-light">
-                  This will clear all custom uploaded photos stored in your browser's IndexedDB and restore the original template placeholders.
+                  This will clear all custom uploaded photos stored in your browser and restore the original template placeholders.
                 </p>
                 <button
                   type="button"
                   onClick={async () => {
-                    if (confirm('Are you sure you want to delete all uploaded photos and reset to defaults?')) {
+                    if (confirm('Are you sure you want to delete all custom photos and restore template defaults?')) {
                       await resetAllPhotosToDefault();
-                      showToast('All photos reset to factory defaults.');
+                      showToast('All photos reset to template defaults.');
                     }
                   }}
                   className="px-4 py-2 rounded-xl bg-rose-600/30 border border-rose-500/50 hover:bg-rose-600/50 text-rose-200 text-xs font-semibold transition cursor-pointer"
@@ -911,7 +963,7 @@ export const AdminPanelModal: React.FC = () => {
         {/* Footer */}
         <div className="px-6 py-4 border-t border-rose-500/15 bg-[#170c21] flex items-center justify-between">
           <span className="text-xs text-rose-300/60 font-light">
-            Photos are saved persistently in browser storage (IndexedDB).
+            Photos are saved persistently in browser storage.
           </span>
           <button
             type="button"
