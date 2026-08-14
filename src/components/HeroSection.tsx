@@ -128,9 +128,7 @@ export const HeroSection: React.FC = () => {
 
               {/* Image Container */}
               <div
-                onClick={() => setIsAdminOpen(true)}
-                className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-black/40 border border-white/10 cursor-pointer group/img"
-                title="Click to change Harshitha's photo in Photo Admin"
+                className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-black/40 border border-white/10 group/img"
               >
                 <img
                   src={heroPhoto}
@@ -140,12 +138,6 @@ export const HeroSection: React.FC = () => {
                     (e.target as HTMLImageElement).src = '/images/harshitha/hero.svg';
                   }}
                 />
-
-                {/* Edit Photo Floating Pill */}
-                <div className="absolute top-3 right-3 opacity-0 group-hover/img:opacity-100 transition-opacity bg-black/70 backdrop-blur-md text-white text-[11px] font-semibold px-2.5 py-1 rounded-full border border-white/20 flex items-center gap-1.5 shadow-lg">
-                  <Edit3 className="w-3 h-3 text-amber-300" />
-                  <span>Change Pic</span>
-                </div>
 
                 {/* Floating Heart Ribbon */}
                 <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 flex items-center justify-between">

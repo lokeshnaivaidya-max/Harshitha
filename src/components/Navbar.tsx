@@ -38,7 +38,7 @@ export const Navbar: React.FC = () => {
 
   const navLinks = [
     { label: 'Our Story', href: '#story', icon: BookOpen },
-    { label: 'Memories', href: '#gallery', icon: Camera },
+    { label: 'Gallery', href: '#gallery', icon: Camera },
     { label: 'Birthday Cake', href: '#cake', icon: Cake },
     { label: 'Why You', href: '#reasons', icon: Heart },
     { label: 'Secret Letter', href: '#letter', icon: Mail },

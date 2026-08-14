@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PhotoMemory, harshithaData } from '../data/harshitha';
 import {
-  getStoredPhotos,
-  saveStoredPhotos,
-  getStoredHeroPhoto,
-  saveStoredHeroPhoto,
-  clearAllStoredData,
   fileToDataUrl,
+  subscribeToFirebaseGallery,
+  getFirebasePhotos,
+  getFirebaseHeroPhoto,
+  savePhotosToFirebase,
+  updatePhotoInFirebase,
+  deletePhotoFromFirebase,
+  saveHeroPhotoToFirebase,
+  clearAllFirebaseData,
 } from '../utils/photoStorage';
 import { soundEngine } from '../utils/sound';
 
@@ -49,26 +52,54 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isLoading, setIsLoading] = useState(true);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  // Initialize data from storage
+  // Initialize data from Firebase Firestore and subscribe to real-time updates
   useEffect(() => {
-    async function loadData() {
-      try {
-        const storedPhotos = await getStoredPhotos();
-        if (storedPhotos && storedPhotos.length > 0) {
-          setPhotos(storedPhotos);
-        }
+    let isMounted = true;
 
-        const storedHero = await getStoredHeroPhoto();
-        if (storedHero) {
-          setHeroPhoto(storedHero);
+    async function initFirebaseData() {
+      try {
+        const [cloudPhotos, cloudHero] = await Promise.all([
+          getFirebasePhotos(),
+          getFirebaseHeroPhoto(),
+        ]);
+
+        if (isMounted) {
+          if (cloudPhotos && cloudPhotos.length > 0) {
+            setPhotos(cloudPhotos);
+          }
+          if (cloudHero) {
+            setHeroPhoto(cloudHero);
+          }
         }
       } catch (err) {
-        console.error('Failed to load photos:', err);
+        console.error('Failed to fetch initial Firebase photos:', err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
-    loadData();
+
+    initFirebaseData();
+
+    // Subscribe to real-time cloud updates across all devices
+    const unsubscribe = subscribeToFirebaseGallery(
+      (updatedPhotos) => {
+        if (isMounted && updatedPhotos && updatedPhotos.length > 0) {
+          setPhotos(updatedPhotos);
+        }
+      },
+      (updatedHero) => {
+        if (isMounted && updatedHero) {
+          setHeroPhoto(updatedHero);
+        }
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   // Helper to check if a photo is an unreplaced default template
@@ -118,7 +149,6 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           if (isDefaultTemplate(currentPhotos[i])) {
             currentPhotos[i] = {
               ...newItems[newItemsIndex],
-              // Keep category/rotation if user didn't override
               category: newItems[newItemsIndex].category || currentPhotos[i].category,
               rotation: currentPhotos[i].rotation,
             };
@@ -135,12 +165,14 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       setPhotos(updatedPhotos);
-      await saveStoredPhotos(updatedPhotos);
 
+      const targetHero = latestHero || heroPhoto;
       if (latestHero) {
         setHeroPhoto(latestHero);
-        await saveStoredHeroPhoto(latestHero);
       }
+
+      // Persist to Firebase Firestore database
+      await savePhotosToFirebase(updatedPhotos, targetHero);
 
       soundEngine.playSparkleSound();
       return true;
@@ -150,7 +182,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  // Replace a specific photo slot (e.g. clicking "Change Image" on any photo card)
+  // Replace a specific photo slot
   const replacePhotoSlot = async (id: string, file: File, meta?: Partial<PhotoMemory>): Promise<boolean> => {
     try {
       const dataUrl = await fileToDataUrl(file);
@@ -170,7 +202,8 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
 
       setPhotos(updatedPhotos);
-      await saveStoredPhotos(updatedPhotos);
+      await savePhotosToFirebase(updatedPhotos, heroPhoto);
+
       soundEngine.playSparkleSound();
       return true;
     } catch (err) {
@@ -184,7 +217,8 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const dataUrl = await fileToDataUrl(file);
       setHeroPhoto(dataUrl);
-      await saveStoredHeroPhoto(dataUrl);
+      await saveHeroPhotoToFirebase(dataUrl);
+
       soundEngine.playSparkleSound();
       return true;
     } catch (err) {
@@ -196,9 +230,13 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Update existing photo details
   const updatePhoto = async (id: string, updates: Partial<PhotoMemory>): Promise<boolean> => {
     try {
-      const updated = photos.map((p) => (p.id === id ? { ...p, ...updates } : p));
-      setPhotos(updated);
-      await saveStoredPhotos(updated);
+      const target = photos.find((p) => p.id === id);
+      if (target) {
+        const updatedPhoto = { ...target, ...updates };
+        const updatedList = photos.map((p) => (p.id === id ? updatedPhoto : p));
+        setPhotos(updatedList);
+        await updatePhotoInFirebase(updatedPhoto);
+      }
       return true;
     } catch {
       return false;
@@ -210,7 +248,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const updated = photos.filter((p) => p.id !== id);
       setPhotos(updated);
-      await saveStoredPhotos(updated);
+      await deletePhotoFromFirebase(id);
       return true;
     } catch {
       return false;
@@ -221,7 +259,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setHeroPhotoFromUrl = async (url: string): Promise<boolean> => {
     try {
       setHeroPhoto(url);
-      await saveStoredHeroPhoto(url);
+      await saveHeroPhotoToFirebase(url);
       return true;
     } catch {
       return false;
@@ -232,7 +270,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const resetHeroPhoto = async (): Promise<boolean> => {
     try {
       setHeroPhoto(harshithaData.hero.heroPhoto);
-      await saveStoredHeroPhoto(harshithaData.hero.heroPhoto);
+      await saveHeroPhotoToFirebase(harshithaData.hero.heroPhoto);
       return true;
     } catch {
       return false;
@@ -243,7 +281,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const reorderPhotos = async (newPhotos: PhotoMemory[]): Promise<boolean> => {
     try {
       setPhotos(newPhotos);
-      await saveStoredPhotos(newPhotos);
+      await savePhotosToFirebase(newPhotos, heroPhoto);
       return true;
     } catch {
       return false;
@@ -253,7 +291,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Reset everything to defaults
   const resetAllPhotosToDefault = async (): Promise<boolean> => {
     try {
-      await clearAllStoredData();
+      await clearAllFirebaseData();
       setPhotos(harshithaData.photoGallery);
       setHeroPhoto(harshithaData.hero.heroPhoto);
       return true;
@@ -276,14 +314,18 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const importBackupJSON = async (jsonStr: string): Promise<boolean> => {
     try {
       const parsed = JSON.parse(jsonStr);
+      let newPhotos = photos;
+      let newHero = heroPhoto;
+
       if (Array.isArray(parsed.photos)) {
+        newPhotos = parsed.photos;
         setPhotos(parsed.photos);
-        await saveStoredPhotos(parsed.photos);
       }
       if (parsed.heroPhoto && typeof parsed.heroPhoto === 'string') {
+        newHero = parsed.heroPhoto;
         setHeroPhoto(parsed.heroPhoto);
-        await saveStoredHeroPhoto(parsed.heroPhoto);
       }
+      await savePhotosToFirebase(newPhotos, newHero);
       return true;
     } catch (err) {
       console.error('Failed to import backup:', err);

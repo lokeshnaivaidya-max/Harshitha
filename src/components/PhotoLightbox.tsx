@@ -158,11 +158,8 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
 
         {/* Caption & Metadata Card below image */}
         <div className="mt-4 p-4 rounded-2xl bg-[#160f22]/90 backdrop-blur-xl border border-rose-500/20 max-w-xl w-full text-center space-y-2">
-          <h3 className="text-xl sm:text-2xl font-serif font-bold text-rose-100">
-            {photo.title}
-          </h3>
-          <p className="text-sm text-rose-200/80 font-light leading-relaxed">
-            {photo.caption}
+          <p className="text-base sm:text-lg text-rose-100 font-light leading-relaxed">
+            {photo.caption || 'A beautiful memory with Harshitha.'}
           </p>
 
           <div className="flex items-center justify-center gap-4 pt-1 text-xs text-rose-300/60 font-medium">

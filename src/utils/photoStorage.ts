@@ -1,39 +1,24 @@
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+  onSnapshot,
+  Unsubscribe,
+} from 'firebase/firestore';
+import { db } from '../firebase';
 import { PhotoMemory } from '../data/harshitha';
 
-const DB_NAME = 'HarshithaBirthdayDB';
-const DB_VERSION = 1;
-const STORE_PHOTOS = 'gallery_photos';
-const STORE_SETTINGS = 'app_settings';
+const STORE_PHOTOS_COLLECTION = 'gallery_photos';
+const STORE_SETTINGS_COLLECTION = 'app_settings';
 const LOCAL_STORAGE_PHOTOS_KEY = 'harshitha_saved_photos';
 const LOCAL_STORAGE_HERO_KEY = 'harshitha_saved_hero';
 
-// Helper to open IndexedDB
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined' || !window.indexedDB) {
-      reject(new Error('IndexedDB not supported'));
-      return;
-    }
-
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_PHOTOS)) {
-        db.createObjectStore(STORE_PHOTOS, { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
-        db.createObjectStore(STORE_SETTINGS, { keyPath: 'key' });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
 // Convert a large File (>5MB) to high-quality Data URL with smart compression
-export function fileToDataUrl(file: File, maxDimension = 1920, quality = 0.9): Promise<string> {
+export function fileToDataUrl(file: File, maxDimension = 1440, quality = 0.85): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -43,7 +28,7 @@ export function fileToDataUrl(file: File, maxDimension = 1920, quality = 0.9): P
         return;
       }
 
-      if (file.type === 'image/svg+xml' || file.size < 250 * 1024) {
+      if (file.type === 'image/svg+xml' || (file.size < 150 * 1024 && rawResult.length < 200 * 1024)) {
         resolve(rawResult);
         return;
       }
@@ -99,152 +84,204 @@ export function formatBytes(bytes: number, decimals = 1): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-// Get all photos from IndexedDB with LocalStorage fallback
-export async function getStoredPhotos(): Promise<PhotoMemory[] | null> {
-  try {
-    const db = await openDB();
-    const photos = await new Promise<PhotoMemory[] | null>((resolve) => {
-      const tx = db.transaction(STORE_PHOTOS, 'readonly');
-      const store = tx.objectStore(STORE_PHOTOS);
-      const req = store.getAll();
-      req.onsuccess = () => {
-        const result = req.result as PhotoMemory[];
-        if (result && result.length > 0) {
-          resolve(result);
-        } else {
-          resolve(null);
-        }
-      };
-      req.onerror = () => resolve(null);
-    });
+// Subscribe to real-time updates from Firebase Firestore
+export function subscribeToFirebaseGallery(
+  onPhotosChange: (photos: PhotoMemory[]) => void,
+  onHeroChange: (heroPhoto: string) => void
+): Unsubscribe {
+  const unsubPhotos = onSnapshot(
+    collection(db, STORE_PHOTOS_COLLECTION),
+    (snapshot) => {
+      if (!snapshot.empty) {
+        const loadedPhotos: PhotoMemory[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as PhotoMemory & { orderIndex?: number };
+          loadedPhotos.push(data);
+        });
+        // Sort by orderIndex or maintain stable order
+        loadedPhotos.sort((a, b) => {
+          const idxA = (a as any).orderIndex ?? 0;
+          const idxB = (b as any).orderIndex ?? 0;
+          return idxA - idxB;
+        });
+        onPhotosChange(loadedPhotos);
+      }
+    },
+    (err) => {
+      console.warn('Firebase snapshot listener error:', err);
+    }
+  );
 
-    if (photos && photos.length > 0) {
+  const unsubHero = onSnapshot(
+    doc(db, STORE_SETTINGS_COLLECTION, 'hero_photo'),
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data && data.value) {
+          onHeroChange(data.value);
+        }
+      }
+    },
+    (err) => {
+      console.warn('Firebase hero snapshot error:', err);
+    }
+  );
+
+  return () => {
+    unsubPhotos();
+    unsubHero();
+  };
+}
+
+// Fetch all photos from Firebase Firestore
+export async function getFirebasePhotos(): Promise<PhotoMemory[] | null> {
+  try {
+    const snap = await getDocs(collection(db, STORE_PHOTOS_COLLECTION));
+    if (!snap.empty) {
+      const photos: PhotoMemory[] = [];
+      snap.forEach((docSnap) => {
+        photos.push(docSnap.data() as PhotoMemory);
+      });
+      photos.sort((a, b) => {
+        const idxA = (a as any).orderIndex ?? 0;
+        const idxB = (b as any).orderIndex ?? 0;
+        return idxA - idxB;
+      });
       return photos;
     }
   } catch (err) {
-    console.warn('IndexedDB read error, checking LocalStorage:', err);
+    console.warn('Firebase getDocs error, falling back to local:', err);
   }
-
-  // Fallback to localStorage
-  try {
-    const local = localStorage.getItem(LOCAL_STORAGE_PHOTOS_KEY);
-    if (local) {
-      const parsed = JSON.parse(local);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch {
-    // Ignore
-  }
-
   return null;
 }
 
-// Save all photos to IndexedDB and LocalStorage
-export async function saveStoredPhotos(photos: PhotoMemory[]): Promise<boolean> {
+// Fetch custom hero photo from Firebase Firestore
+export async function getFirebaseHeroPhoto(): Promise<string | null> {
   try {
-    const db = await openDB();
-    await new Promise<boolean>((resolve) => {
-      const tx = db.transaction(STORE_PHOTOS, 'readwrite');
-      const store = tx.objectStore(STORE_PHOTOS);
-      
-      store.clear();
-      photos.forEach((photo) => {
-        store.put(photo);
-      });
-
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-    });
+    const docSnap = await getDoc(doc(db, STORE_SETTINGS_COLLECTION, 'hero_photo'));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (data && data.value) {
+        return data.value;
+      }
+    }
   } catch (err) {
-    console.error('Error saving photos to IndexedDB:', err);
+    console.warn('Firebase getHero error:', err);
   }
-
-  try {
-    localStorage.setItem(LOCAL_STORAGE_PHOTOS_KEY, JSON.stringify(photos));
-  } catch {
-    // Ignore quota issues
-  }
-
-  return true;
+  return null;
 }
 
-// Get custom hero photo
-export async function getStoredHeroPhoto(): Promise<string | null> {
+// Save all photos to Firebase Firestore
+export async function savePhotosToFirebase(photos: PhotoMemory[], heroPhoto?: string): Promise<boolean> {
   try {
-    const db = await openDB();
-    const hero = await new Promise<string | null>((resolve) => {
-      const tx = db.transaction(STORE_SETTINGS, 'readonly');
-      const store = tx.objectStore(STORE_SETTINGS);
-      const req = store.get('hero_photo');
-      req.onsuccess = () => {
-        if (req.result && req.result.value) {
-          resolve(req.result.value);
-        } else {
-          resolve(null);
-        }
-      };
-      req.onerror = () => resolve(null);
-    });
+    // 1. Fetch current docs to remove any deleted photos
+    const currentSnap = await getDocs(collection(db, STORE_PHOTOS_COLLECTION));
+    const currentIds = new Set(currentSnap.docs.map((d) => d.id));
+    const newIds = new Set(photos.map((p) => p.id));
 
-    if (hero) return hero;
-  } catch {
-    // Fallback
-  }
+    // Delete removed docs
+    for (const docSnap of currentSnap.docs) {
+      if (!newIds.has(docSnap.id)) {
+        await deleteDoc(doc(db, STORE_PHOTOS_COLLECTION, docSnap.id));
+      }
+    }
 
-  try {
-    return localStorage.getItem(LOCAL_STORAGE_HERO_KEY);
-  } catch {
-    return null;
+    // Save each photo with orderIndex
+    for (let i = 0; i < photos.length; i++) {
+      const photo = photos[i];
+      await setDoc(doc(db, STORE_PHOTOS_COLLECTION, photo.id), {
+        ...photo,
+        orderIndex: i,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    // Save hero photo if provided
+    if (heroPhoto) {
+      await setDoc(doc(db, STORE_SETTINGS_COLLECTION, 'hero_photo'), {
+        value: heroPhoto,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    // Backup to local storage
+    try {
+      localStorage.setItem(LOCAL_STORAGE_PHOTOS_KEY, JSON.stringify(photos));
+      if (heroPhoto) {
+        localStorage.setItem(LOCAL_STORAGE_HERO_KEY, heroPhoto);
+      }
+    } catch {
+      // Ignore local storage quota
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Failed to save to Firebase:', err);
+    return false;
   }
 }
 
-// Save custom hero photo
-export async function saveStoredHeroPhoto(photoUrl: string): Promise<boolean> {
+// Save single updated photo to Firebase
+export async function updatePhotoInFirebase(photo: PhotoMemory): Promise<boolean> {
   try {
-    const db = await openDB();
-    await new Promise<boolean>((resolve) => {
-      const tx = db.transaction(STORE_SETTINGS, 'readwrite');
-      const store = tx.objectStore(STORE_SETTINGS);
-      store.put({ key: 'hero_photo', value: photoUrl });
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-    });
-  } catch {
-    // Fallback
+    await setDoc(
+      doc(db, STORE_PHOTOS_COLLECTION, photo.id),
+      {
+        ...photo,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (err) {
+    console.error('Failed to update photo in Firebase:', err);
+    return false;
   }
-
-  try {
-    localStorage.setItem(LOCAL_STORAGE_HERO_KEY, photoUrl);
-  } catch {
-    // Ignore
-  }
-
-  return true;
 }
 
-// Clear all custom data and reset
-export async function clearAllStoredData(): Promise<boolean> {
+// Delete single photo from Firebase
+export async function deletePhotoFromFirebase(photoId: string): Promise<boolean> {
   try {
-    const db = await openDB();
-    await new Promise<boolean>((resolve) => {
-      const tx = db.transaction([STORE_PHOTOS, STORE_SETTINGS], 'readwrite');
-      tx.objectStore(STORE_PHOTOS).clear();
-      tx.objectStore(STORE_SETTINGS).clear();
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-    });
-  } catch {
-    // Ignore
+    await deleteDoc(doc(db, STORE_PHOTOS_COLLECTION, photoId));
+    return true;
+  } catch (err) {
+    console.error('Failed to delete photo from Firebase:', err);
+    return false;
   }
+}
 
+// Save hero photo to Firebase
+export async function saveHeroPhotoToFirebase(heroUrl: string): Promise<boolean> {
   try {
+    await setDoc(doc(db, STORE_SETTINGS_COLLECTION, 'hero_photo'), {
+      value: heroUrl,
+      updatedAt: new Date().toISOString(),
+    });
+    try {
+      localStorage.setItem(LOCAL_STORAGE_HERO_KEY, heroUrl);
+    } catch {
+      // Ignore
+    }
+    return true;
+  } catch (err) {
+    console.error('Failed to save hero photo to Firebase:', err);
+    return false;
+  }
+}
+
+// Clear all photos and reset
+export async function clearAllFirebaseData(): Promise<boolean> {
+  try {
+    const snap = await getDocs(collection(db, STORE_PHOTOS_COLLECTION));
+    for (const docSnap of snap.docs) {
+      await deleteDoc(doc(db, STORE_PHOTOS_COLLECTION, docSnap.id));
+    }
+    await deleteDoc(doc(db, STORE_SETTINGS_COLLECTION, 'hero_photo'));
     localStorage.removeItem(LOCAL_STORAGE_PHOTOS_KEY);
     localStorage.removeItem(LOCAL_STORAGE_HERO_KEY);
-  } catch {
-    // Ignore
+    return true;
+  } catch (err) {
+    console.error('Failed to clear Firebase data:', err);
+    return false;
   }
-
-  return true;
 }

@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "GalleryConfig": {
+      "collection": "gallery_config",
+      "description": "Stores the birthday photo gallery state and hero photo",
+      "fields": {
+        "photos": {
+          "type": "array",
+          "description": "List of photo memory items"
+        },
+        "heroPhoto": {
+          "type": "string",
+          "description": "Hero photo URL or base64 data"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      }
+    }
+  }
+}
